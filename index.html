@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HygieneCheck | Food Safety Leaderboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-shield-virus"></i> HygieneCheck
+        </div>
+        <div class="nav-links">
+            <button id="seedDataBtn" style="display:none;">(Dev) Seed Data</button>
+            <div id="authLinks">
+                <button onclick="openModal('loginModal')" class="btn-text">Log In</button>
+                <button onclick="openModal('registerModal')" class="btn-primary">Sign Up</button>
+            </div>
+            <div id="userProfile" class="hidden">
+                <span id="userEmail"></span>
+                <button onclick="logout()" class="btn-text">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Find Safe & Hygienic Street Food</h1>
+        <p>Transparent ratings based on water quality, cleanliness, masks, and gloves.</p>
+        <div class="search-bar">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" id="searchInput" placeholder="Search by City or Locality (e.g., Mumbai, Indiranagar)">
+            <button onclick="searchStalls()" class="btn-primary">Search</button>
+        </div>
+        <button onclick="openModal('addStallModal')" class="btn-outline" id="addStallBtn">+ Add a Food Stall</button>
+    </header>
+
+    <main class="container">
+        <div class="section-header">
+            <h2>Hygiene Leaderboard</h2>
+            <div class="sort-options">
+                <label>Ranked by Hygiene Score</label>
+            </div>
+        </div>
+        
+        <div id="stallList" class="stall-grid">
+            <div class="loading">Loading hygiene data...</div>
+        </div>
+    </main>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Welcome Back</h2>
+            <input type="email" id="loginEmail" placeholder="Email Address">
+            <input type="password" id="loginPass" placeholder="Password">
+            <button onclick="loginUser()" class="btn-primary full-width">Log In</button>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('registerModal')">&times;</span>
+            <h2>Create Account</h2>
+            <input type="email" id="regEmail" placeholder="Email Address">
+            <input type="password" id="regPass" placeholder="Password">
+            <button onclick="registerUser()" class="btn-primary full-width">Sign Up</button>
+        </div>
+    </div>
+
+    <div id="addStallModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addStallModal')">&times;</span>
+            <h2>Register New Stall</h2>
+            <input type="text" id="stallName" placeholder="Stall Name">
+            <input type="text" id="stallCity" placeholder="City">
+            <input type="text" id="stallLocality" placeholder="Locality / Area">
+            <div class="file-upload">
+                <label><i class="fas fa-camera"></i> Upload Stall Photo</label>
+                <input type="file" id="stallPhoto"> </div>
+            <button onclick="addNewStall()" class="btn-primary full-width">Submit Stall</button>
+        </div>
+    </div>
+
+    <div id="rateModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('rateModal')">&times;</span>
+            <h2 id="ratingStallName">Rate Stall</h2>
+            <input type="hidden" id="ratingStallId">
+            
+            <div class="rating-criteria">
+                <label>Water Quality (1-5)</label>
+                <input type="range" id="rateWater" min="1" max="5" value="3" oninput="this.nextElementSibling.value = this.value">
+                <output>3</output>
+            </div>
+            <div class="rating-criteria">
+                <label>Masks Usage (1-5)</label>
+                <input type="range" id="rateMasks" min="1" max="5" value="3" oninput="this.nextElementSibling.value = this.value">
+                <output>3</output>
+            </div>
+            <div class="rating-criteria">
+                <label>Gloves Usage (1-5)</label>
+                <input type="range" id="rateGloves" min="1" max="5" value="3" oninput="this.nextElementSibling.value = this.value">
+                <output>3</output>
+            </div>
+            <div class="rating-criteria">
+                <label>General Cleanliness (1-5)</label>
+                <input type="range" id="rateClean" min="1" max="5" value="3" oninput="this.nextElementSibling.value = this.value">
+                <output>3</output>
+            </div>
+            
+            <textarea id="rateComment" placeholder="Write a short review..."></textarea>
+            <button onclick="submitReview()" class="btn-primary full-width">Submit Review</button>
+        </div>
+    </div>
+
+    <div id="qrModal" class="modal">
+        <div class="modal-content center-text">
+            <span class="close" onclick="closeModal('qrModal')">&times;</span>
+            <h2>Hygiene Certificate</h2>
+            <p>Scan to view detailed hygiene report</p>
+            <div id="qrcode" style="display:flex; justify-content:center; margin: 20px 0;"></div>
+            <h3 id="qrStallName" style="color:#27ae60;"></h3>
+            <div id="qrScore" class="score-badge large"></div>
+            <button onclick="window.print()" class="btn-outline">Print Certificate</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
